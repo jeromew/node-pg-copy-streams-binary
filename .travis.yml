@@ -16,3 +16,4 @@ before_install:
 
 env:
   - PGUSER=postgres PGDATABASE=postgres
+
