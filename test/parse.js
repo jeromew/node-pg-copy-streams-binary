@@ -1,6 +1,5 @@
 var assert = require('assert');
 var gonna = require('gonna');
-var bufferEqual = require('buffer-equal');
 
 var pgtypes = require('../lib/pg_types');
 var types = pgtypes.types;

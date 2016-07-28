@@ -16,7 +16,6 @@
     "url": "https://github.com/jeromew/node-pg-copy-streams-binary/issues"
   },
   "dependencies": {
-    "buffer-equal": "^1.0.0",
     "bufferput": "^0.1.2",
     "flatten": "^1.0.2",
     "ieee754": "^1.1.6",
