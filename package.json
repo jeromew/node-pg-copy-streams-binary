@@ -1,0 +1,33 @@
+{
+  "name": "pg-copy-streams-binary",
+  "version": "1.0.0",
+  "description": "Streams for parsing and deparsing the COPY binary format",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jeromew/node-pg-copy-streams-binary.git"
+  },
+  "author": "Jérôme Wagner",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jeromew/node-pg-copy-streams-binary/issues"
+  },
+  "dependencies": {
+    "buffer-equal": "^1.0.0",
+    "bufferput": "^0.1.2",
+    "flatten": "^1.0.2",
+    "ieee754": "^1.1.6",
+    "int64-buffer": "^0.1.9"
+  },
+  "devDependencies": {
+    "async": "^2.0.1",
+    "deeper": "^2.1.0",
+    "gonna": "0.0.0",
+    "pg": "^6.0.3",
+    "pg-copy-streams": "^1.1.1",
+    "through2": "^2.0.1"
+  }
+}
