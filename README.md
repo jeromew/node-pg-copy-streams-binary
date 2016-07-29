@@ -70,6 +70,8 @@ Here is a code that will do just this.
 ```js
 var pg = require('pg');
 var through2 = require('through2');
+var copyOut = require('pg-copy-streams').to;
+var copyIn = require('pg-copy-streams').from;
 var pgCopyTransform = require('pg-copy-streams-binary').transform;
 
 var client = function(dsn) {
