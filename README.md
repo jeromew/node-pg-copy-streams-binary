@@ -90,12 +90,6 @@ var AStream = clientA.query(copyOut('COPY item      TO   STDOUT BINARY'))
 var BStream = clientB.query(copyIn ('COPY product   FROM STDIN  BINARY'))
 var CStream = clientB.query(copyIn ('COPY generated FROM STDIN  BINARY'))
 
-var mapping = [
-    { key: 'id', type: 'int4' },
-    { key: 'ref', type: 'text' },
-    { key: 'description', type: 'text'},
-]
-
 var transform = through2.obj(
   function(row, _, cb) {
     var id = parseInt(row.ref.split(':')[0]);
@@ -176,6 +170,7 @@ this.push([index,
     { type: .., value: .. },
     { type: .., value: .. },
 ])
+```
 
 where `index` is an integer that corresponds to the target COPY command in the `targets` option.
 The { type: .., value: ..} elements MUST correspond to the number of fields in the target COPY command and the types must correspond to the associated types in the database. The transform operation can change the types of the data in the incoming rows, but it must always adhere to the types of the target table in the COPY target because there will be no coercion in the database and the binary protocol must send the data exactly as it is expected in the table.
