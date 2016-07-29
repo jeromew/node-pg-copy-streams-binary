@@ -19,14 +19,15 @@
     "bufferput": "^0.1.2",
     "flatten": "^1.0.2",
     "ieee754": "^1.1.6",
-    "int64-buffer": "^0.1.9"
+    "int64-buffer": "^0.1.9",
+    "multi-fork": "0.0.2",
+    "through2": "^2.0.1"
   },
   "devDependencies": {
     "async": "^2.0.1",
     "deeper": "^2.1.0",
     "gonna": "0.0.0",
     "pg": "^6.0.3",
-    "pg-copy-streams": "^1.1.1",
-    "through2": "^2.0.1"
+    "pg-copy-streams": "^1.1.1"
   }
 }

@@ -25,11 +25,16 @@ Do you want to go there ? If you take the blue pill, then this module might be f
 
 It can be used to parse and deparse the PostgreSQL binary streams that are made available by the `pg-copy-streams` module.
 
-## Examples
+The main API is called `transform` an tries to hide many of those details. It can be used to easily do non trivial things like :
+ - transforming rows
+ - expanding on the number of rows
+ - forking rows into several databases at the same time, with the same of different structures 
+
+## Example
 
 This library is mostly interesting for ETL operations (Extract, Transformation, Load). When you just need Extract+Load, `pg-copy-streams` does the job and you don't need this library.
 
-So Here is an example of Tranformation where you want to Extract data from database A (dsnA) and move it to database B (dsnB). But there is a twist.
+So Here is an example of Tranformation where you want to Extract data from database A (dsnA) and move it in two databases B (dsnB) and C (dsn C). But there is a twist.
 
 In database A, you have table of items
 
@@ -50,14 +55,22 @@ Moreover, all the descriptions are now required to be lowercase, so you would li
 Someone in-the-know has told you that the creation timestamp of the product can be derived from the id ! Simply add `id` days to 1999-01-01T00:00:00Z.
 You also need a int2 2-dim array matrix field filled with [[ id, id+1 ], [ id+2, id+3 ]] because that is what the specification says.
 
+Table C has the simple structure
+
+```sql
+CREATE TABLE generated (body text);
+```
+
+And you want to fill it, for each source row, with a number `id` of rows (expanding the number of rows), with a body of "BODY: " + description. 
+
+After all this is done, you want to add a line in the `generated` table with a body of "COUNT: " + total number of rows inserted (not counting this one)
+
 Here is a code that will do just this.
 
 ```js
 var pg = require('pg');
-var copyOut = require('pg-copy-streams').to;
-var copyIn = require('pg-copy-streams').from;
-var parser = require('pg-copy-streams-binary').parser;
-var deparser = require('pg-copy-streams-binary').deparser;
+var through2 = require('through2');
+var pgCopyTransform = require('pg-copy-streams-binary').transform;
 
 var client = function(dsn) {
   var client = new pg.Client(dsn);
@@ -67,57 +80,113 @@ var client = function(dsn) {
 
 var dsnA = null; // configure database A connection parameters
 var dsnB = null; // configure database B connection parameters
+var dsnC = null; // configure database C connection parameters
 
 var clientA = client(dsnA);
 var clientB = client(dsnB);
+var clientC = client(dsnC);
 
-var AStream = clientA.query(copyOut('COPY item TO STDOUT BINARY'))
-var Parser  = new parser({
-  objectMode: true,
-  mapping: [
+var AStream = clientA.query(copyOut('COPY item      TO   STDOUT BINARY'))
+var BStream = clientB.query(copyIn ('COPY product   FROM STDIN  BINARY'))
+var CStream = clientB.query(copyIn ('COPY generated FROM STDIN  BINARY'))
+
+var mapping = [
     { key: 'id', type: 'int4' },
     { key: 'ref', type: 'text' },
     { key: 'description', type: 'text'},
-]})
-var Deparser = new deparser({
-  objectMode: true,
-  mapping: [
-    function(row) { return { type: 'int4', value: parseInt(row.ref.split(':')[0])} },
-    function(row) { return { type: 'text', value: row.ref.split(':')[1] } },
-    function(row) { return { type: 'text', value: row.description.toLowerCase() } },
-    function(row) {
-      var d = new Date('1999-01-01T00:00:00Z');
-      var numberOfDaysToAdd = parseInt(row.ref.split(':')[0]);
-      d.setDate(d.getDate() + numberOfDaysToAdd);
-      return { type: 'timestamptz', value: d } },
-    function(row) {
-      var id = parseInt(row.ref.split(':')[0]);
-      return { type: '_int2', value: [[id, id+1], [id+2, id+3]]}
+]
+
+var transform = through2.obj(
+  function(row, _, cb) {
+    var id = parseInt(row.ref.split(':')[0]);
+    var d = new Date('1999-01-01T00:00:00Z');
+    d.setDate(d.getDate() + id);
+    count++
+    this.push([0,
+      { type: 'int4', value: id },
+      { type: 'text', value: row.ref.split(':')[1] },
+      { type: 'text', value: row.description.toLowerCase() },
+      { type: 'timestamptz', value: d },
+      { type: '_int2', value: [ [ id, id+1 ], [ id+2, id+3 ] ] }
+    ])
+    while (id > 0) {
+      count++
+      this.push([1,
+        { type: 'text', value: 'BODY: ' + row.description }
+      ]);
+      id--;
     }
-]})
-var BStream = clientB.query(copyIn ('COPY product FROM STDIN BINARY'))
+    cb()
+  },
+  function(cb) {
+    this.push([1,
+      { type: 'text', value: 'COUNT: ' + count}
+    ])
+    cb()
+  }
+);
 
-var runStream = function(callback) {
-  // listen for errors
-  AStream.on('error', callback)
-  Parser.on('error', callback)
-  Deparser.on('error', callback)
-  BStream.on('error', callback)
+var count = 0;
+var pct = pgCopyTransform({
+  mapping: [{key:'id',type:'int4'}, {key:'ref',type:'text'},{key:'description',type:'text'}],
+  transform: transform,
+  targets: [BStream, CStream],
+});
 
-  // listen for the end of ingestion
-  BStream.on('finish', callback);
-  AStream.pipe(Parser).pipe(Deparser).pipe(BStream);
-}
-
-runStream(function(err) {
-  // done !!
-  clientA.end()
-  clientB.end()
+pct.on('close', function() {
+  // Done !
+  clientA.end();
+  clientB.end();
+  clientC.end();
 })
+
+AStream.pipe(pct);
 
 ```
 
 The `test/transform.js` test does something along these lines to check that it works.
+
+## API for `transform(options)`
+
+This method returns a Writable Stream. You should pipe a `pg-copy-streams.to` Stream into it. Make sure the corresponding command is in BINARY format.
+
+There are 3 must-have options and 1 important Event.
+
+### option `mapping`
+
+This is an array of { key:, type: } elements. There MUST be as many elements defined as there are columns that are fetched by the COPY command.
+
+The keys are arbitrary and each database row in the COPY command will be translated into an object with those keys holding the values corresponding to their position in the `mapping` array and their respective position in the COPY command.
+
+### option `targets`
+
+This is an array of `pg-copy-streams.from` Streams. The transform operation can deliver transformed rows to several tables in several databases at the same time. Each target will be referenced by its index in the transform stream.
+
+### option `transform`
+
+This MUST be a classical PassThrough Stream. You can build it with `through2` for example. This stream is a Duplex Stream that takes a serie of rows as input and that outputs another serie of rows.
+
+It can remove rows, add rows, transform rows. Whatever a through stream can do.
+
+When rows are pushed, they should have the format
+
+```js
+this.push([index,
+    { type: .., value: .. },
+    { type: .., value: .. },
+    { type: .., value: .. },
+])
+
+where `index` is an integer that corresponds to the target COPY command in the `targets` option.
+The { type: .., value: ..} elements MUST correspond to the number of fields in the target COPY command and the types must correspond to the associated types in the database. The transform operation can change the types of the data in the incoming rows, but it must always adhere to the types of the target table in the COPY target because there will be no coercion in the database and the binary protocol must send the data exactly as it is expected in the table.
+
+### Event `close`
+
+The Writable Stream will emit a `close` event, following the node.js documentation
+
+> The 'close' event is emitted when the stream and any of its underlying resources (a file descriptor, for example) have been closed. The event indicates that no more events will be emitted, and no further computation will occur.
+
+Not all Streams emit a `close` event but this one does because it is necessary to wait for the end of all the underlying COPY FROM STDIN BINARY commands on the targets. `close` is emitted when all the underlying COPY commands have emitted their respective `finish` event.
 
 ## API for Deparser
 
