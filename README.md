@@ -185,7 +185,15 @@ The Writable Stream will emit a `close` event, following the node.js documentati
 
 Not all Streams emit a `close` event but this one does because it is necessary to wait for the end of all the underlying COPY FROM STDIN BINARY commands on the targets. `close` is emitted when all the underlying COPY commands have emitted their respective `finish` event.
 
-## API for Deparser
+## API for deparser
+
+the deparser is usually used without arguments. It is a Transform Stream (always in object mode) that receives a stream of arrays, and outputs their PostgreSQL binary representation.
+
+Each array is a sequence of { type:.. , value: ..} pairs, where `type` is a PostgreSQL type (cf section supported types) and `value` is the value that need to be deparsed.
+
+Currently, make sure sure value is not the javascript `undefined` because this case is not handled in the deparser. The value can be `null` but don't forget that the target table field should be nullable or the database will complain.
+
+Usually, you would want to use a through2 stream to prepare the arrays, and pipe this into the deparser.
 
 ### options.COPY_sendHeader
 
@@ -198,13 +206,6 @@ You could use this if you want to pipe this stream to an already opened COPY ses
 default: true
 This option can be used to not send the header that PostgreSQL expects at the end of COPY session.
 You could use this if you want to unpipe this stream pipe another one that will send more data and maybe finish the COPY session.
-
-### options.mapping
-
-default: false
-By default, the Deparser expects a stream of arrays. Each array consists of `{ type: type, value: value }` elements. The length of the array MUST be equal to the number of fields in your target database table. The types MUST be identical to the types of the fields in the database (cf the "currently supported types")
-
-This `mapping` option can be used to transform an stream of objects into such an array. mapping MUST be an array of Function elements. The prototype of the function is `function(row)`. The function can do what it wants with the row and output the necessary `{ type: type, value: value }`
 
 
 ## API for Parser
