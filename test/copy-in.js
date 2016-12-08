@@ -10,6 +10,22 @@ var client = function() {
   return client
 }
 
+var testEmpty = function() {
+  var fromClient = client();
+  fromClient.query('CREATE TEMP TABLE plug (col1 text)')
+  var txt = 'COPY plug FROM STDIN BINARY'
+  var copyIn = fromClient.query(copy(txt))
+  var copyUn = deparser({objectMode: true});
+  copyUn.pipe(copyIn);
+  copyUn.end() 
+  var done = gonna('empty rows should not trigger error');
+  copyIn.on('end', function() {
+    done();
+    fromClient.end();
+  })
+}
+testEmpty();
+
 var testType = function(type, ndim, value, expectedText) {
   var fromClient = client()
   
