@@ -16,18 +16,18 @@
     "url": "https://github.com/jeromew/node-pg-copy-streams-binary/issues"
   },
   "dependencies": {
-    "bufferput": "^0.1.2",
+    "bufferput": "^0.1.3",
     "flatten": "^1.0.2",
-    "ieee754": "^1.1.6",
-    "int64-buffer": "^0.1.9",
+    "ieee754": "^1.1.13",
+    "int64-buffer": "^0.99.1007",
     "multi-fork": "0.0.2",
-    "through2": "^2.0.1"
+    "through2": "^3.0.1"
   },
   "devDependencies": {
-    "async": "^2.0.1",
+    "async": "^2.6.2",
     "deeper": "^2.1.0",
     "gonna": "0.0.0",
-    "pg": "^6.0.3",
-    "pg-copy-streams": "^1.2.0"
+    "pg": "^7.9.0",
+    "pg-copy-streams": "^2.2.0"
   }
 }
