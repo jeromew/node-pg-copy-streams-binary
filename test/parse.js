@@ -5,7 +5,6 @@ var pgtypes = require('../lib/pg_types');
 var types = pgtypes.types;
 var parse = pgtypes.parse;
 
-var flatten = require('flatten');
 var BP = require('bufferput');
 var samples = require('./samples');
 
@@ -16,6 +15,10 @@ function size(ar){
         row_sizes.push(ar[i].length)
     }
     return [row_count, Math.max.apply(null, row_sizes)]
+}
+
+function flatten(arr) {
+  return arr.reduce((acc, val) => Array.isArray(val) ? acc.concat(flatten(val)) : acc.concat(val), []);
 }
 
 var test_samples = function() {
