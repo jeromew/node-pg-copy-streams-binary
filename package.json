@@ -27,6 +27,6 @@
     "deeper": "^2.1.0",
     "gonna": "0.0.0",
     "pg": "^7.9.0",
-    "pg-copy-streams": "^2.2.0"
+    "pg-copy-streams": "^2.2.2"
   }
 }
