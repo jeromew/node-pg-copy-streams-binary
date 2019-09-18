@@ -1,11 +1,10 @@
 language: node_js
 node_js:
-  - "6"
   - "8"
   - "10"
-  - "11"
+  - "12"
 addons:
-  postgresql: "9.3"
+  postgresql: "9.6"
 
 services:
   - postgresql
