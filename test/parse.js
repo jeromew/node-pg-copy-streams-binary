@@ -1,74 +1,74 @@
-var assert = require('assert');
-var gonna = require('gonna');
+const assert = require('assert')
 
-var pgtypes = require('../lib/pg_types');
-var types = pgtypes.types;
-var parse = pgtypes.parse;
+const pgtypes = require('../lib/pg_types')
+const { parse } = pgtypes
 
-var BP = require('bufferput');
-var samples = require('./samples');
+const samples = require('./samples')
 
-function size(ar){
-    var row_count = ar.length;
-    var row_sizes = []
-    for(var i=0;i<row_count;i++){
-        row_sizes.push(ar[i].length)
-    }
-    return [row_count, Math.max.apply(null, row_sizes)]
+function size(ar) {
+  const row_count = ar.length
+  const row_sizes = []
+  for (let i = 0; i < row_count; i++) {
+    row_sizes.push(ar[i].length)
+  }
+  return [row_count, Math.max.apply(null, row_sizes)]
 }
 
 function flatten(arr) {
-  return arr.reduce((acc, val) => Array.isArray(val) ? acc.concat(flatten(val)) : acc.concat(val), []);
+  return arr.reduce((acc, val) => (Array.isArray(val) ? acc.concat(flatten(val)) : acc.concat(val)), [])
 }
 
-var test_samples = function() {
-  samples.forEach(function(s) {
-
-    var buf = s.r;
-    var fieldLen = buf.readUInt32BE(0);
-    var isNull = buf.readInt32BE(0);
-    var UInt32Len = 4;
-    var type = s.t;
+const test_samples = function () {
+  samples.forEach(function (s) {
+    const buf = s.r
+    // eslint-disable-next-line no-unused-vars
+    const fieldLen = buf.readUInt32BE(0)
+    const isNull = buf.readInt32BE(0)
+    const UInt32Len = 4
+    let type = s.t
     if (isNull === -1) {
       assert.equal(buf.length, UInt32Len, 'A "null" binary buffer should be 0xffffffff')
     } else {
-      var got = parse(buf.slice(UInt32Len), s.t)
-      var expected = s.v;
+      let got = parse(buf.slice(UInt32Len), s.t)
+      let expected = s.v
 
-      var gots = [ got ];
-      var expecteds = [ expected ];
+      let gots = [got]
+      let expecteds = [expected]
 
-      if (s.t[0]==='_') {
+      if (s.t[0] === '_') {
         assert.equal(size(got).join(','), size(expected).join(','), 'array dimensions should match')
         gots = flatten(got)
         expecteds = flatten(expecteds)
-        type = s.t.substr(1);
+        type = s.t.substr(1)
       }
 
-      assert.equal(gots.length, expecteds.length, s.t+': arrays should have the same global number of members')
+      assert.equal(gots.length, expecteds.length, s.t + ': arrays should have the same global number of members')
 
-      for (var i=0; i<gots.length;i++) {   
-        got = gots[i];
-        expected = expecteds[i];
-        switch(type) {
+      for (let i = 0; i < gots.length; i++) {
+        got = gots[i]
+        expected = expecteds[i]
+        switch (type) {
           case 'bytea':
-            got = got.toString();
-            expected = got.toString();
-            break;
+            got = got.toString()
+            expected = got.toString()
+            break
           case 'json':
-            got = JSON.stringify(got);
-            expected = JSON.stringify(expected);
-            break;
+            got = JSON.stringify(got)
+            expected = JSON.stringify(expected)
+            break
           case 'timestamptz':
-            got = got.getTime();
-            expected = expected.getTime();
-            break;
+            got = got.getTime()
+            expected = expected.getTime()
+            break
         }
-        assert.equal(got, expected, s.t+': parsed value is incorrect for ' + s.t + ' expected ' + expected + ', got ' + got)
+        assert.equal(
+          got,
+          expected,
+          s.t + ': parsed value is incorrect for ' + s.t + ' expected ' + expected + ', got ' + got
+        )
       }
-
     }
   })
 }
 
-test_samples();
+test_samples()
