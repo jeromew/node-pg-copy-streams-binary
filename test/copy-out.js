@@ -16,7 +16,7 @@ var client = function() {
 
 var samples = {
   'bool': [null, true, false ],
-  'bytea': [new Buffer([0x61]), null, new Buffer([0x62])],
+  'bytea': [Buffer.from([0x61]), null, Buffer.from([0x62])],
   'int2': [23, -59, null],
   'int4': [2938, null, -99283],
   'text': ['aaa', 'ééé', null],
