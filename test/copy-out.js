@@ -1,20 +1,20 @@
-var assert = require('assert')
-var gonna = require('gonna')
-var pg = require('pg')
-var parser = require('../').parser
-var copy = require('pg-copy-streams').to
-var pgtypes = require('../lib/pg_types')
-var types = pgtypes.types
-var through2 = require('through2')
-var deepEqual = require('deeper')
+const assert = require('assert')
+const gonna = require('gonna')
+const pg = require('pg')
+const parser = require('../').parser
+const copy = require('pg-copy-streams').to
+const pgtypes = require('../lib/pg_types')
+const types = pgtypes.types
+const through2 = require('through2')
+const deepEqual = require('deeper')
 
-var client = function () {
-  var client = new pg.Client()
+const client = function () {
+  const client = new pg.Client()
   client.connect()
   return client
 }
 
-var samples = {
+const samples = {
   bool: [null, true, false],
   bytea: [Buffer.from([0x61]), null, Buffer.from([0x62])],
   int2: [23, -59, null],
@@ -26,40 +26,40 @@ var samples = {
   timestamptz: [new Date('2000-01-01T00:00:00Z'), null, new Date('1972-04-25T18:22:00Z')],
 }
 
-var testParser = function () {
-  var fromClient = client()
-  var idx = 1
-  var fields = []
-  var placeholders = []
-  var mapping = []
-  var rows = []
-  for (var t in samples) {
+const testParser = function () {
+  const fromClient = client()
+  let idx = 1
+  const fields = []
+  const placeholders = []
+  const mapping = []
+  const rows = []
+  for (const t in samples) {
     fields.push('c' + idx + ' ' + t)
     placeholders.push('$' + idx)
     mapping.push({ key: 'c' + idx, type: t })
-    for (var c = 0; c < samples[t].length; c++) {
+    for (let c = 0; c < samples[t].length; c++) {
       rows[c] = rows[c] || []
       rows[c].push(samples[t][c])
     }
     idx++
   }
   fromClient.query('CREATE TEMP TABLE plug (' + fields.join(',') + ')')
-  for (var i = 0; i < rows.length; i++) {
+  for (let i = 0; i < rows.length; i++) {
     fromClient.query('INSERT INTO plug VALUES (' + placeholders.join(',') + ')', rows[i])
   }
 
-  var txt = 'COPY plug TO STDOUT BINARY'
-  var copyOut = fromClient.query(copy(txt))
-  var p = parser({ objectMode: true, mapping: mapping })
+  const txt = 'COPY plug TO STDOUT BINARY'
+  const copyOut = fromClient.query(copy(txt))
+  const p = parser({ objectMode: true, mapping: mapping })
 
-  var countDone = gonna('have correct count')
-  var idx = 0
+  const countDone = gonna('have correct count')
+  idx = 0
   copyOut.pipe(p).pipe(
     through2.obj(
       function (obj, _, cb) {
-        for (var i = 0; i < mapping.length; i++) {
-          var expected = samples[mapping[i].type][idx]
-          var got = obj[mapping[i].key]
+        for (let i = 0; i < mapping.length; i++) {
+          let expected = samples[mapping[i].type][idx]
+          let got = obj[mapping[i].key]
           if (expected !== null && got !== null) {
             switch (mapping[i].type) {
               case 'bytea':

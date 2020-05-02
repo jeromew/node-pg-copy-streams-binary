@@ -1,24 +1,24 @@
-var assert = require('assert')
-var gonna = require('gonna')
-var pg = require('pg')
-var deparser = require('../').deparser
-var copy = require('pg-copy-streams').from
+const assert = require('assert')
+const gonna = require('gonna')
+const pg = require('pg')
+const deparser = require('../').deparser
+const copy = require('pg-copy-streams').from
 
-var client = function () {
-  var client = new pg.Client()
+const client = function () {
+  const client = new pg.Client()
   client.connect()
   return client
 }
 
-var testEmpty = function () {
-  var fromClient = client()
+const testEmpty = function () {
+  const fromClient = client()
   fromClient.query('CREATE TEMP TABLE plug (col1 text)')
-  var txt = 'COPY plug FROM STDIN BINARY'
-  var copyIn = fromClient.query(copy(txt))
-  var copyUn = deparser({ objectMode: true })
+  const txt = 'COPY plug FROM STDIN BINARY'
+  const copyIn = fromClient.query(copy(txt))
+  const copyUn = deparser({ objectMode: true })
   copyUn.pipe(copyIn)
   copyUn.end()
-  var done = gonna('empty rows should not trigger error')
+  const done = gonna('empty rows should not trigger error')
   copyIn.on('end', function () {
     done()
     fromClient.end()
@@ -26,14 +26,14 @@ var testEmpty = function () {
 }
 testEmpty()
 
-var testType = function (type, ndim, value, expectedText) {
-  var fromClient = client()
+const testType = function (type, ndim, value, expectedText) {
+  const fromClient = client()
 
-  var atype = type
+  let atype = type
   if (ndim > 0) {
     atype = '_' + atype
   }
-  var coltype = type
+  let coltype = type
   while (ndim > 0) {
     coltype += '[]'
     ndim--
@@ -41,14 +41,14 @@ var testType = function (type, ndim, value, expectedText) {
 
   fromClient.query('CREATE TEMP TABLE plug (col1 ' + coltype + ')')
 
-  var txt = 'COPY plug FROM STDIN BINARY'
-  var copyIn = fromClient.query(copy(txt))
-  var copyUn = deparser({ objectMode: true })
+  const txt = 'COPY plug FROM STDIN BINARY'
+  const copyIn = fromClient.query(copy(txt))
+  const copyUn = deparser({ objectMode: true })
   copyUn.pipe(copyIn)
   copyUn.end([{ type: atype, value: value }])
-  var countDone = gonna('have correct count')
+  const countDone = gonna('have correct count')
   copyIn.on('end', function () {
-    var sql = 'SELECT col1::text FROM plug'
+    const sql = 'SELECT col1::text FROM plug'
     fromClient.query(sql, function (err, res) {
       assert.ifError(err)
       assert.equal(

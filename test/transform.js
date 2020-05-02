@@ -1,49 +1,49 @@
-var assert = require('assert')
-var async = require('async')
+const assert = require('assert')
+const async = require('async')
 
-var pg = require('pg')
-var pgCopyOut = require('pg-copy-streams').to
-var pgCopyIn = require('pg-copy-streams').from
-var through2 = require('through2')
+const pg = require('pg')
+const pgCopyOut = require('pg-copy-streams').to
+const pgCopyIn = require('pg-copy-streams').from
+const through2 = require('through2')
 
-var pgCopyTransform = require('../').transform
+const pgCopyTransform = require('../').transform
 
-var client = function (dsn) {
-  var client = new pg.Client(dsn)
+const client = function (dsn) {
+  const client = new pg.Client(dsn)
   client.connect()
   return client
 }
 
-var clientA = client()
-var clientB = client()
-var clientC = client()
+const clientA = client()
+const clientB = client()
+const clientC = client()
 
-var queriesA = [
+const queriesA = [
   'DROP TABLE IF EXISTS item',
   'CREATE TABLE item (id serial PRIMARY KEY, ref text, description text)',
   "INSERT INTO item (ref, description) VALUES ('1:CTX', 'A little item')",
   "INSERT INTO item (ref, description) VALUES ('2:CTX', 'A BIG item')",
 ]
 
-var queriesB = [
+const queriesB = [
   'DROP TABLE IF EXISTS product',
   'CREATE TABLE product (code int4 PRIMARY KEY, label text, description text, ts_creation timestamptz, matrix int2[][])',
 ]
 
-var queriesC = ['DROP TABLE IF EXISTS generated', 'CREATE TABLE generated (body text)']
+const queriesC = ['DROP TABLE IF EXISTS generated', 'CREATE TABLE generated (body text)']
 
 // we simplify by observing here that A=B when tests are executed
 async.eachSeries(queriesA.concat(queriesB, queriesC), clientA.query.bind(clientA), function (err) {
   assert.ifError(err)
 
-  var copyOut = clientA.query(pgCopyOut('COPY item TO STDOUT BINARY'))
-  var copyIns = [
+  const copyOut = clientA.query(pgCopyOut('COPY item TO STDOUT BINARY'))
+  const copyIns = [
     clientB.query(pgCopyIn('COPY product   FROM STDIN BINARY')),
     clientC.query(pgCopyIn('COPY generated FROM STDIN BINARY')),
   ]
 
-  var count = 0
-  var pct = pgCopyTransform({
+  let count = 0
+  const pct = pgCopyTransform({
     mapping: [
       { key: 'id', type: 'int4' },
       { key: 'ref', type: 'text' },
@@ -52,8 +52,8 @@ async.eachSeries(queriesA.concat(queriesB, queriesC), clientA.query.bind(clientA
     targets: copyIns,
     transform: through2.obj(
       function (row, _, cb) {
-        var id = parseInt(row.ref.split(':')[0])
-        var d = new Date('1999-01-01T00:00:00Z')
+        let id = parseInt(row.ref.split(':')[0])
+        const d = new Date('1999-01-01T00:00:00Z')
         d.setDate(d.getDate() + id)
         count++
         this.push([
@@ -91,7 +91,7 @@ async.eachSeries(queriesA.concat(queriesB, queriesC), clientA.query.bind(clientA
       clientA.end()
     })
     clientB.query('SELECT * FROM product ORDER BY code ASC', function (err, res) {
-      var d = new Date('1999-01-01T00:00:00Z')
+      const d = new Date('1999-01-01T00:00:00Z')
       assert.equal(res.rowCount, 2, 'expected 2 tuples on B, but got ' + res.rowCount)
 
       // first row

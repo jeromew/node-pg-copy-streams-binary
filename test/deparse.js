@@ -1,17 +1,17 @@
-var assert = require('assert')
-var gonna = require('gonna')
+const assert = require('assert')
+const gonna = require('gonna')
 
-var pgtypes = require('../lib/pg_types')
-var types = pgtypes.types
-var deparse = pgtypes.deparse
+const pgtypes = require('../lib/pg_types')
+const types = pgtypes.types
+const deparse = pgtypes.deparse
 
-var BP = require('bufferput')
-var samples = require('./samples')
+const BP = require('bufferput')
+const samples = require('./samples')
 
-var test_samples = function () {
+const test_samples = function () {
   samples.forEach(function (s) {
-    var buf = deparse(new BP(), s.t, s.v).buffer()
-    var eq = buf.equals(s.r)
+    const buf = deparse(new BP(), s.t, s.v).buffer()
+    const eq = buf.equals(s.r)
     assert(
       eq,
       'Unparse ' +

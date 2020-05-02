@@ -1,9 +1,9 @@
-var pgtypes = require('../lib/pg_types')
-var types = pgtypes.types
-var BP = require('bufferput')
+const pgtypes = require('../lib/pg_types')
+const types = pgtypes.types
+const BP = require('bufferput')
 
 BP.prototype.string = function (s, enc) {
-  var buf = Buffer.from(s, enc)
+  const buf = Buffer.from(s, enc)
   return this.put(buf)
 }
 

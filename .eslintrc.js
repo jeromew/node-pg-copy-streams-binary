@@ -9,5 +9,9 @@ module.exports = {
     node: true,
     es6: true,
     mocha: true,
-  }
+  },
+  rules: {
+    'prefer-const': ['error'],
+    'no-var': ['error'],
+  },
 }

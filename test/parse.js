@@ -1,17 +1,17 @@
-var assert = require('assert')
-var gonna = require('gonna')
+const assert = require('assert')
+const gonna = require('gonna')
 
-var pgtypes = require('../lib/pg_types')
-var types = pgtypes.types
-var parse = pgtypes.parse
+const pgtypes = require('../lib/pg_types')
+const types = pgtypes.types
+const parse = pgtypes.parse
 
-var BP = require('bufferput')
-var samples = require('./samples')
+const BP = require('bufferput')
+const samples = require('./samples')
 
 function size(ar) {
-  var row_count = ar.length
-  var row_sizes = []
-  for (var i = 0; i < row_count; i++) {
+  const row_count = ar.length
+  const row_sizes = []
+  for (let i = 0; i < row_count; i++) {
     row_sizes.push(ar[i].length)
   }
   return [row_count, Math.max.apply(null, row_sizes)]
@@ -21,21 +21,21 @@ function flatten(arr) {
   return arr.reduce((acc, val) => (Array.isArray(val) ? acc.concat(flatten(val)) : acc.concat(val)), [])
 }
 
-var test_samples = function () {
+const test_samples = function () {
   samples.forEach(function (s) {
-    var buf = s.r
-    var fieldLen = buf.readUInt32BE(0)
-    var isNull = buf.readInt32BE(0)
-    var UInt32Len = 4
-    var type = s.t
+    const buf = s.r
+    const fieldLen = buf.readUInt32BE(0)
+    const isNull = buf.readInt32BE(0)
+    const UInt32Len = 4
+    let type = s.t
     if (isNull === -1) {
       assert.equal(buf.length, UInt32Len, 'A "null" binary buffer should be 0xffffffff')
     } else {
-      var got = parse(buf.slice(UInt32Len), s.t)
-      var expected = s.v
+      let got = parse(buf.slice(UInt32Len), s.t)
+      let expected = s.v
 
-      var gots = [got]
-      var expecteds = [expected]
+      let gots = [got]
+      let expecteds = [expected]
 
       if (s.t[0] === '_') {
         assert.equal(size(got).join(','), size(expected).join(','), 'array dimensions should match')
@@ -46,7 +46,7 @@ var test_samples = function () {
 
       assert.equal(gots.length, expecteds.length, s.t + ': arrays should have the same global number of members')
 
-      for (var i = 0; i < gots.length; i++) {
+      for (let i = 0; i < gots.length; i++) {
         got = gots[i]
         expected = expecteds[i]
         switch (type) {
