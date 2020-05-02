@@ -3,10 +3,7 @@ const gonna = require('gonna')
 const pg = require('pg')
 const parser = require('../').parser
 const copy = require('pg-copy-streams').to
-const pgtypes = require('../lib/pg_types')
-const types = pgtypes.types
 const through2 = require('through2')
-const deepEqual = require('deeper')
 
 const client = function () {
   const client = new pg.Client()

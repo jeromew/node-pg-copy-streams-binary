@@ -1,11 +1,8 @@
 const assert = require('assert')
-const gonna = require('gonna')
 
 const pgtypes = require('../lib/pg_types')
-const types = pgtypes.types
 const parse = pgtypes.parse
 
-const BP = require('bufferput')
 const samples = require('./samples')
 
 function size(ar) {
@@ -24,6 +21,7 @@ function flatten(arr) {
 const test_samples = function () {
   samples.forEach(function (s) {
     const buf = s.r
+    // eslint-disable-next-line no-unused-vars
     const fieldLen = buf.readUInt32BE(0)
     const isNull = buf.readInt32BE(0)
     const UInt32Len = 4

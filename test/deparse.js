@@ -1,8 +1,6 @@
 const assert = require('assert')
-const gonna = require('gonna')
 
 const pgtypes = require('../lib/pg_types')
-const types = pgtypes.types
 const deparse = pgtypes.deparse
 
 const BP = require('bufferput')
