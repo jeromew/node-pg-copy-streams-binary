@@ -1,7 +1,7 @@
 const assert = require('assert')
 
 const pgtypes = require('../lib/pg_types')
-const deparse = pgtypes.deparse
+const { deparse } = pgtypes
 
 const BP = require('bufferput')
 const samples = require('./samples')

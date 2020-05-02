@@ -1,5 +1,5 @@
 const pgtypes = require('../lib/pg_types')
-const types = pgtypes.types
+const { types } = pgtypes
 const BP = require('bufferput')
 
 BP.prototype.string = function (s, enc) {

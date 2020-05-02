@@ -1,7 +1,7 @@
 const assert = require('assert')
 
 const pgtypes = require('../lib/pg_types')
-const types = pgtypes.types
+const { types } = pgtypes
 
 const samples = require('./samples')
 

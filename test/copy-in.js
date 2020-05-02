@@ -1,8 +1,8 @@
 const assert = require('assert')
 const gonna = require('gonna')
 const pg = require('pg')
-const deparser = require('../').deparser
-const copy = require('pg-copy-streams').from
+const { deparser } = require('../')
+const { from: copyFrom } = require('pg-copy-streams')
 
 const client = function () {
   const client = new pg.Client()
@@ -14,7 +14,7 @@ const testEmpty = function () {
   const fromClient = client()
   fromClient.query('CREATE TEMP TABLE plug (col1 text)')
   const txt = 'COPY plug FROM STDIN BINARY'
-  const copyIn = fromClient.query(copy(txt))
+  const copyIn = fromClient.query(copyFrom(txt))
   const copyUn = deparser({ objectMode: true })
   copyUn.pipe(copyIn)
   copyUn.end()
@@ -42,7 +42,7 @@ const testType = function (type, ndim, value, expectedText) {
   fromClient.query('CREATE TEMP TABLE plug (col1 ' + coltype + ')')
 
   const txt = 'COPY plug FROM STDIN BINARY'
-  const copyIn = fromClient.query(copy(txt))
+  const copyIn = fromClient.query(copyFrom(txt))
   const copyUn = deparser({ objectMode: true })
   copyUn.pipe(copyIn)
   copyUn.end([{ type: atype, value: value }])

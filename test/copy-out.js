@@ -1,8 +1,8 @@
 const assert = require('assert')
 const gonna = require('gonna')
 const pg = require('pg')
-const parser = require('../').parser
-const copy = require('pg-copy-streams').to
+const { parser } = require('../')
+const { to: copyTo } = require('pg-copy-streams')
 const through2 = require('through2')
 
 const client = function () {
@@ -46,7 +46,7 @@ const testParser = function () {
   }
 
   const txt = 'COPY plug TO STDOUT BINARY'
-  const copyOut = fromClient.query(copy(txt))
+  const copyOut = fromClient.query(copyTo(txt))
   const p = parser({ objectMode: true, mapping: mapping })
 
   const countDone = gonna('have correct count')

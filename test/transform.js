@@ -2,11 +2,10 @@ const assert = require('assert')
 const async = require('async')
 
 const pg = require('pg')
-const pgCopyOut = require('pg-copy-streams').to
-const pgCopyIn = require('pg-copy-streams').from
+const { to: pgCopyTo, from: pgCopyFrom } = require('pg-copy-streams')
 const through2 = require('through2')
 
-const pgCopyTransform = require('../').transform
+const { transform } = require('../')
 
 const client = function (dsn) {
   const client = new pg.Client(dsn)
@@ -36,14 +35,14 @@ const queriesC = ['DROP TABLE IF EXISTS generated', 'CREATE TABLE generated (bod
 async.eachSeries(queriesA.concat(queriesB, queriesC), clientA.query.bind(clientA), function (err) {
   assert.ifError(err)
 
-  const copyOut = clientA.query(pgCopyOut('COPY item TO STDOUT BINARY'))
+  const copyOut = clientA.query(pgCopyTo('COPY item TO STDOUT BINARY'))
   const copyIns = [
-    clientB.query(pgCopyIn('COPY product   FROM STDIN BINARY')),
-    clientC.query(pgCopyIn('COPY generated FROM STDIN BINARY')),
+    clientB.query(pgCopyFrom('COPY product   FROM STDIN BINARY')),
+    clientC.query(pgCopyFrom('COPY generated FROM STDIN BINARY')),
   ]
 
   let count = 0
-  const pct = pgCopyTransform({
+  const pct = transform({
     mapping: [
       { key: 'id', type: 'int4' },
       { key: 'ref', type: 'text' },
