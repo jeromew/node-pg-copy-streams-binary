@@ -19,7 +19,7 @@ const testEmpty = function () {
   copyUn.pipe(copyIn)
   copyUn.end()
   const done = gonna('empty rows should not trigger error')
-  copyIn.on('end', function () {
+  copyIn.on('finish', function () {
     done()
     fromClient.end()
   })
@@ -47,7 +47,7 @@ const testType = function (type, ndim, value, expectedText) {
   copyUn.pipe(copyIn)
   copyUn.end([{ type: atype, value: value }])
   const countDone = gonna('have correct count')
-  copyIn.on('end', function () {
+  copyIn.on('finish', function () {
     const sql = 'SELECT col1::text FROM plug'
     fromClient.query(sql, function (err, res) {
       assert.ifError(err)
