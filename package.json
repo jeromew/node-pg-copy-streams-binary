@@ -1,6 +1,6 @@
 {
   "name": "pg-copy-streams-binary",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Streams for parsing and deparsing the COPY binary format",
   "main": "index.js",
   "scripts": {
