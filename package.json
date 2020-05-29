@@ -4,7 +4,7 @@
   "description": "Streams for parsing and deparsing the COPY binary format",
   "main": "index.js",
   "scripts": {
-    "test": "npm run lint && node test",
+    "test": "npm run lint && mocha",
     "lint": "[ \"$(node -v | cut -d. -f1)\" = \"v8\" ] || eslint '**/*.{js,ts}'"
   },
   "repository": {
@@ -17,6 +17,7 @@
     "url": "https://github.com/jeromew/node-pg-copy-streams-binary/issues"
   },
   "dependencies": {
+    "bl": "^4.0.2",
     "bufferput": "^0.1.3",
     "ieee754": "^1.1.13",
     "int64-buffer": "^0.99.1007",
@@ -25,13 +26,15 @@
   },
   "devDependencies": {
     "async": "^2.6.2",
+    "concat-stream": "^2.0.0",
     "deeper": "^2.1.0",
     "eslint": "^6.8.0",
     "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-prettier": "^3.1.3",
     "gonna": "0.0.0",
+    "mocha": "^7.2.0",
     "pg": "^7.9.0",
-    "pg-copy-streams": "^4.0.0",
+    "pg-copy-streams": "^5.0.0",
     "prettier": "^2.0.5"
   },
   "prettier": {

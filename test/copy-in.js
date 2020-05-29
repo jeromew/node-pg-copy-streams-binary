@@ -1,103 +1,104 @@
 const assert = require('assert')
-const gonna = require('gonna')
+const util = require('util')
 const pg = require('pg')
 const { deparser } = require('../')
 const { from: copyFrom } = require('pg-copy-streams')
 
-const client = function () {
+const getClient = function () {
   const client = new pg.Client()
   client.connect()
   return client
 }
 
-const testEmpty = function () {
-  const fromClient = client()
-  fromClient.query('CREATE TEMP TABLE plug (col1 text)')
-  const txt = 'COPY plug FROM STDIN BINARY'
-  const copyIn = fromClient.query(copyFrom(txt))
-  const copyUn = deparser({ objectMode: true })
-  copyUn.pipe(copyIn)
-  copyUn.end()
-  const done = gonna('empty rows should not trigger error')
-  copyIn.on('finish', function () {
-    done()
-    fromClient.end()
+describe('integration test - copyIn', () => {
+  it('ingesting an empty flow should not trigger an error', (done) => {
+    const client = getClient()
+    client.query('CREATE TEMP TABLE plug (col1 text)')
+    const sql = 'COPY plug FROM STDIN BINARY'
+    const copyIn = client.query(copyFrom(sql))
+    const encoder = deparser({ objectMode: true })
+    encoder.pipe(copyIn)
+    const cleanup = (err) => {
+      done(err)
+      client.end()
+    }
+    copyIn.on('finish', cleanup)
+    copyIn.on('error', cleanup)
+    copyIn.on('error', cleanup)
+    encoder.end()
   })
-}
-testEmpty()
 
-const testType = function (type, ndim, value, expectedText) {
-  const fromClient = client()
+  const samples = [
+    ['bool', 0, null, null],
+    ['bool', 0, true, 'true'],
+    ['bool', 0, false, 'false'],
+    ['bool', 1, [true, false], '{t,f}'],
+    ['int2', 0, 0, '0'],
+    ['int2', 0, 7, '7'],
+    ['int2', 1, [2, 9], '{2,9}'],
+    [
+      'int2',
+      2,
+      [
+        [1, 2],
+        [3, 4],
+      ],
+      '{{1,2},{3,4}}',
+    ],
+    ['int4', 0, null, null],
+    ['int4', 0, 7, '7'],
+    ['int4', 1, [2, 9], '{2,9}'],
+    [
+      'int4',
+      2,
+      [
+        [1, 2],
+        [3, 4],
+      ],
+      '{{1,2},{3,4}}',
+    ],
+    ['float4', 0, 0.2736, '0.2736'],
+    ['float4', 0, 2.928e27, '2.928e+27'],
+    ['float8', 0, 7.23e50, '7.23e+50'],
+    ['json', 0, { a: 1, b: 2 }, '{"a":1,"b":2}'],
+    ['json', 1, [{ a: 1 }, {}], '{"{\\"a\\":1}","{}"}'],
+    ['timestamptz', 0, new Date('2017-04-25T18:22:00Z'), '2017-04-25 18:22:00+00'],
+  ]
 
-  let atype = type
-  if (ndim > 0) {
-    atype = '_' + atype
-  }
-  let coltype = type
-  while (ndim > 0) {
-    coltype += '[]'
-    ndim--
-  }
-
-  fromClient.query('CREATE TEMP TABLE plug (col1 ' + coltype + ')')
-
-  const txt = 'COPY plug FROM STDIN BINARY'
-  const copyIn = fromClient.query(copyFrom(txt))
-  const copyUn = deparser({ objectMode: true })
-  copyUn.pipe(copyIn)
-  copyUn.end([{ type: atype, value: value }])
-  const countDone = gonna('have correct count')
-  copyIn.on('finish', function () {
-    const sql = 'SELECT col1::text FROM plug'
-    fromClient.query(sql, function (err, res) {
-      assert.ifError(err)
-      assert.equal(
-        res.rows[0].col1,
-        expectedText,
-        'expected ' +
-          expectedText +
-          ' for ' +
-          coltype +
-          ' row but got ' +
-          (res.rows.length ? res.rows[0].col1 : '0 rows')
-      )
-      countDone()
-      fromClient.end()
+  samples.forEach(function (s) {
+    const [type, ndim, value, expectedText] = s
+    it(`test type ${type}: ${util.inspect(value)}`, (done) => {
+      const client = getClient()
+      const atype = (ndim > 0 ? '_' : '') + type
+      const coltype = type + '[]'.repeat(ndim)
+      client.query('CREATE TEMP TABLE plug (col1 ' + coltype + ')')
+      const sql = 'COPY plug FROM STDIN BINARY'
+      const copyIn = client.query(copyFrom(sql))
+      const encoder = deparser({ objectMode: true })
+      encoder.pipe(copyIn)
+      copyIn.on('finish', () => {
+        const sql = 'SELECT col1::text FROM plug'
+        client.query(sql, function (err, res) {
+          client.end()
+          if (err) return done(err)
+          try {
+            assert.equal(
+              res.rows[0].col1,
+              expectedText,
+              'expected ' +
+                expectedText +
+                ' for ' +
+                coltype +
+                ' row but got ' +
+                (res.rows.length ? res.rows[0].col1 : '0 rows')
+            )
+          } catch (err) {
+            return done(err)
+          }
+          done()
+        })
+      })
+      encoder.end([{ type: atype, value: value }])
     })
   })
-}
-
-testType('bool', 0, null, null)
-testType('bool', 0, true, 'true')
-testType('bool', 0, false, 'false')
-testType('bool', 1, [true, false], '{t,f}')
-testType('int2', 0, 0, '0')
-testType('int2', 0, 7, '7')
-testType('int2', 1, [2, 9], '{2,9}')
-testType(
-  'int2',
-  2,
-  [
-    [1, 2],
-    [3, 4],
-  ],
-  '{{1,2},{3,4}}'
-)
-testType('int4', 0, null, null)
-testType('int4', 0, 7, '7')
-testType('int4', 1, [2, 9], '{2,9}')
-testType(
-  'int4',
-  2,
-  [
-    [1, 2],
-    [3, 4],
-  ],
-  '{{1,2},{3,4}}'
-)
-testType('float4', 0, 0.2736, '0.2736')
-testType('float4', 0, 2.928e27, '2.928e+27')
-testType('float8', 0, 7.23e50, '7.23e+50')
-testType('json', 0, { a: 1, b: 2 }, '{"a":1,"b":2}')
-testType('json', 1, [{ a: 1 }, {}], '{"{\\"a\\":1}","{}"}')
-testType('timestamptz', 0, new Date('2017-04-25T18:22:00Z'), '2017-04-25 18:22:00+00')
+})

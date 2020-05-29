@@ -1,4 +1,5 @@
 const assert = require('assert')
+const util = require('util')
 
 const pgtypes = require('../lib/pg_types')
 const { deparse } = pgtypes
@@ -6,22 +7,22 @@ const { deparse } = pgtypes
 const BP = require('bufferput')
 const samples = require('./samples')
 
-const test_samples = function () {
+describe('encode', () => {
   samples.forEach(function (s) {
-    const buf = deparse(new BP(), s.t, s.v).buffer()
-    const eq = buf.equals(s.r)
-    assert(
-      eq,
-      'Unparse ' +
-        s.t +
-        ' not matching: ' +
-        (s.v !== null ? s.v.toString() : 'null') +
-        ' => ' +
-        buf.toString('hex') +
-        ' / ' +
-        s.r.toString('hex')
-    )
+    it(`encode type ${s.t}: ${util.inspect(s.v)}`, async () => {
+      const buf = deparse(new BP(), s.t, s.v).buffer()
+      const eq = buf.equals(s.r)
+      assert(
+        eq,
+        'encode ' +
+          s.t +
+          ' not matching: ' +
+          (s.v !== null ? s.v.toString() : 'null') +
+          ' => ' +
+          buf.toString('hex') +
+          ' / ' +
+          s.r.toString('hex')
+      )
+    })
   })
-}
-
-test_samples()
+})

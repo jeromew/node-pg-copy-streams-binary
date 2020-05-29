@@ -1,4 +1,7 @@
+'use strict'
+
 const assert = require('assert')
+const util = require('util')
 
 const pgtypes = require('../lib/pg_types')
 const { parse } = pgtypes
@@ -18,57 +21,55 @@ function flatten(arr) {
   return arr.reduce((acc, val) => (Array.isArray(val) ? acc.concat(flatten(val)) : acc.concat(val)), [])
 }
 
-const test_samples = function () {
+describe('decode', () => {
   samples.forEach(function (s) {
-    const buf = s.r
-    // eslint-disable-next-line no-unused-vars
-    const fieldLen = buf.readUInt32BE(0)
-    const isNull = buf.readInt32BE(0)
-    const UInt32Len = 4
-    let type = s.t
-    if (isNull === -1) {
-      assert.equal(buf.length, UInt32Len, 'A "null" binary buffer should be 0xffffffff')
-    } else {
-      let got = parse(buf.slice(UInt32Len), s.t)
-      let expected = s.v
+    it(`parse type ${s.t}: ${util.inspect(s.v)}`, async () => {
+      const buf = s.r
+      const isNull = buf.readInt32BE(0)
+      const UInt32Len = 4
+      let type = s.t
+      if (isNull === -1) {
+        assert.equal(buf.length, UInt32Len, 'A "null" binary buffer should be 0xffffffff')
+      } else {
+        let result = parse(buf.slice(UInt32Len), s.t)
+        let expected = s.v
 
-      let gots = [got]
-      let expecteds = [expected]
+        let results = [result]
+        let expecteds = [expected]
 
-      if (s.t[0] === '_') {
-        assert.equal(size(got).join(','), size(expected).join(','), 'array dimensions should match')
-        gots = flatten(got)
-        expecteds = flatten(expecteds)
-        type = s.t.substr(1)
-      }
-
-      assert.equal(gots.length, expecteds.length, s.t + ': arrays should have the same global number of members')
-
-      for (let i = 0; i < gots.length; i++) {
-        got = gots[i]
-        expected = expecteds[i]
-        switch (type) {
-          case 'bytea':
-            got = got.toString()
-            expected = got.toString()
-            break
-          case 'json':
-            got = JSON.stringify(got)
-            expected = JSON.stringify(expected)
-            break
-          case 'timestamptz':
-            got = got.getTime()
-            expected = expected.getTime()
-            break
+        if (s.t[0] === '_') {
+          assert.equal(size(result).join(','), size(expected).join(','), 'array dimensions should match')
+          results = flatten(result)
+          expecteds = flatten(expected)
+          type = s.t.substr(1)
         }
-        assert.equal(
-          got,
-          expected,
-          s.t + ': parsed value is incorrect for ' + s.t + ' expected ' + expected + ', got ' + got
-        )
-      }
-    }
-  })
-}
 
-test_samples()
+        assert.equal(results.length, expecteds.length, s.t + ': arrays should have the same global number of members')
+
+        for (let i = 0; i < results.length; i++) {
+          result = results[i]
+          expected = expecteds[i]
+          switch (type) {
+            case 'bytea':
+              result = result.toString('hex')
+              expected = expected.toString('hex')
+              break
+            case 'json':
+              result = JSON.stringify(result)
+              expected = JSON.stringify(expected)
+              break
+            case 'timestamptz':
+              result = result.getTime()
+              expected = expected.getTime()
+              break
+          }
+          assert.equal(
+            result,
+            expected,
+            s.t + ': parsed value is incorrect for ' + s.t + ' expected ' + expected + ', got ' + result
+          )
+        }
+      }
+    })
+  })
+})
