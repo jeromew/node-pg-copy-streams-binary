@@ -2,7 +2,7 @@ const assert = require('assert')
 const util = require('util')
 
 const pgtypes = require('../lib/pg_types')
-const { deparse } = pgtypes
+const { encode } = pgtypes
 
 const BP = require('bufferput')
 const samples = require('./samples')
@@ -10,7 +10,7 @@ const samples = require('./samples')
 describe('encode', () => {
   samples.forEach(function (s) {
     it(`encode type ${s.t}: ${util.inspect(s.v)}`, async () => {
-      const buf = deparse(new BP(), s.t, s.v).buffer()
+      const buf = encode(new BP(), s.t, s.v).buffer()
       const eq = buf.equals(s.r)
       assert(
         eq,

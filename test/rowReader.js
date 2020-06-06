@@ -1,6 +1,6 @@
 const assert = require('assert')
 const pg = require('pg')
-const { parser } = require('../')
+const { rowReader } = require('../')
 const { to: copyTo } = require('pg-copy-streams')
 const through2 = require('through2')
 const concat = require('concat-stream')
@@ -48,7 +48,7 @@ describe('integration test - copyOut', () => {
 
     const sql = 'COPY plug TO STDOUT BINARY'
     const copyOut = client.query(copyTo(sql))
-    const p = parser({ objectMode: true, mapping: mapping })
+    const p = rowReader({ objectMode: true, mapping: mapping })
 
     idx = 0
     const pipeline = copyOut.pipe(p).pipe(
@@ -113,7 +113,7 @@ describe('integration test - copyOut', () => {
       assert.deepEqual(arr[0].c1, Buffer.alloc(Math.pow(2, power), '-'))
       done()
     }
-    const p = parser({ objectMode: true, mapping: [{ key: 'c1', type: 'bytea' }] })
+    const p = rowReader({ objectMode: true, mapping: [{ key: 'c1', type: 'bytea' }] })
     p.on('error', (err) => {
       client.end()
       done(err)

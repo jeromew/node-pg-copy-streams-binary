@@ -4,7 +4,7 @@ const assert = require('assert')
 const util = require('util')
 
 const pgtypes = require('../lib/pg_types')
-const { parse } = pgtypes
+const { decode } = pgtypes
 
 const samples = require('./samples')
 
@@ -23,7 +23,7 @@ function flatten(arr) {
 
 describe('decode', () => {
   samples.forEach(function (s) {
-    it(`parse type ${s.t}: ${util.inspect(s.v)}`, async () => {
+    it(`decode type ${s.t}: ${util.inspect(s.v)}`, async () => {
       const buf = s.r
       const isNull = buf.readInt32BE(0)
       const UInt32Len = 4
@@ -31,7 +31,7 @@ describe('decode', () => {
       if (isNull === -1) {
         assert.equal(buf.length, UInt32Len, 'A "null" binary buffer should be 0xffffffff')
       } else {
-        let result = parse(buf.slice(UInt32Len), s.t)
+        let result = decode(buf.slice(UInt32Len), s.t)
         let expected = s.v
 
         let results = [result]
@@ -66,7 +66,7 @@ describe('decode', () => {
           assert.equal(
             result,
             expected,
-            s.t + ': parsed value is incorrect for ' + s.t + ' expected ' + expected + ', got ' + result
+            s.t + ': decoded value is incorrect for ' + s.t + ' expected ' + expected + ', got ' + result
           )
         }
       }

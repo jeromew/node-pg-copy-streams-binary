@@ -1,5 +1,5 @@
 module.exports = {
-  deparser: require('./lib/deparser'),
-  parser: require('./lib/parser'),
+  rowReader: require('./lib/rowReader'),
+  rowWriter: require('./lib/rowWriter'),
   transform: require('./lib/transform'),
 }

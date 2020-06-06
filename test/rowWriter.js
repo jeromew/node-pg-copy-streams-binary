@@ -1,7 +1,7 @@
 const assert = require('assert')
 const util = require('util')
 const pg = require('pg')
-const { deparser } = require('../')
+const { rowWriter } = require('../')
 const { from: copyFrom } = require('pg-copy-streams')
 
 const getClient = function () {
@@ -16,7 +16,7 @@ describe('integration test - copyIn', () => {
     client.query('CREATE TEMP TABLE plug (col1 text)')
     const sql = 'COPY plug FROM STDIN BINARY'
     const copyIn = client.query(copyFrom(sql))
-    const encoder = deparser({ objectMode: true })
+    const encoder = rowWriter({ objectMode: true })
     encoder.pipe(copyIn)
     const cleanup = (err) => {
       done(err)
@@ -74,7 +74,7 @@ describe('integration test - copyIn', () => {
       client.query('CREATE TEMP TABLE plug (col1 ' + coltype + ')')
       const sql = 'COPY plug FROM STDIN BINARY'
       const copyIn = client.query(copyFrom(sql))
-      const encoder = deparser({ objectMode: true })
+      const encoder = rowWriter({ objectMode: true })
       encoder.pipe(copyIn)
       copyIn.on('finish', () => {
         const sql = 'SELECT col1::text FROM plug'
