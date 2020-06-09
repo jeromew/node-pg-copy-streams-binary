@@ -18,12 +18,13 @@ const samples = {
   int4: [2938, null, -99283],
   text: ['aaa', 'ééé', null],
   json: [JSON.stringify({}), JSON.stringify([1, 2]), null],
+  jsonb: [JSON.stringify({}), JSON.stringify({ a: true, b: [4, 2] }), null],
   float4: [0.26350000500679016, null, -3.2929999872755022e-12],
   float8: [9000.12, 9.23e29, null],
   timestamptz: [new Date('2000-01-01T00:00:00Z'), null, new Date('1972-04-25T18:22:00Z')],
 }
 
-describe('integration test - copyOut', () => {
+describe('integration test - rowReader', () => {
   it('test INSERT / COPY TO round trip', (done) => {
     const client = getClient()
     let idx = 1
@@ -48,7 +49,7 @@ describe('integration test - copyOut', () => {
 
     const sql = 'COPY plug TO STDOUT BINARY'
     const copyOut = client.query(copyTo(sql))
-    const p = rowReader({ objectMode: true, mapping: mapping })
+    const p = rowReader({ mapping: mapping })
 
     idx = 0
     const pipeline = copyOut.pipe(p).pipe(
@@ -64,6 +65,7 @@ describe('integration test - copyOut', () => {
                   result = result.toString()
                   break
                 case 'json':
+                case 'jsonb':
                   result = JSON.stringify(result)
                   break
                 case 'timestamptz':
@@ -113,7 +115,7 @@ describe('integration test - copyOut', () => {
       assert.deepEqual(arr[0].c1, Buffer.alloc(Math.pow(2, power), '-'))
       done()
     }
-    const p = rowReader({ objectMode: true, mapping: [{ key: 'c1', type: 'bytea' }] })
+    const p = rowReader({ mapping: [{ key: 'c1', type: 'bytea' }] })
     p.on('error', (err) => {
       client.end()
       done(err)

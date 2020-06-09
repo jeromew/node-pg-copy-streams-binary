@@ -55,6 +55,7 @@ describe('decode', () => {
               expected = expected.toString('hex')
               break
             case 'json':
+            case 'jsonb':
               result = JSON.stringify(result)
               expected = JSON.stringify(expected)
               break

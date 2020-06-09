@@ -16,7 +16,7 @@ describe('integration test - copyIn', () => {
     client.query('CREATE TEMP TABLE plug (col1 text)')
     const sql = 'COPY plug FROM STDIN BINARY'
     const copyIn = client.query(copyFrom(sql))
-    const encoder = rowWriter({ objectMode: true })
+    const encoder = rowWriter()
     encoder.pipe(copyIn)
     const cleanup = (err) => {
       done(err)
@@ -62,6 +62,8 @@ describe('integration test - copyIn', () => {
     ['float8', 0, 7.23e50, '7.23e+50'],
     ['json', 0, { a: 1, b: 2 }, '{"a":1,"b":2}'],
     ['json', 1, [{ a: 1 }, {}], '{"{\\"a\\":1}","{}"}'],
+    ['jsonb', 0, { a: 1, b: 2 }, '{"a": 1, "b": 2}'],
+    ['jsonb', 1, [{ a: 1 }, {}], '{"{\\"a\\": 1}","{}"}'],
     ['timestamptz', 0, new Date('2017-04-25T18:22:00Z'), '2017-04-25 18:22:00+00'],
   ]
 
@@ -74,7 +76,7 @@ describe('integration test - copyIn', () => {
       client.query('CREATE TEMP TABLE plug (col1 ' + coltype + ')')
       const sql = 'COPY plug FROM STDIN BINARY'
       const copyIn = client.query(copyFrom(sql))
-      const encoder = rowWriter({ objectMode: true })
+      const encoder = rowWriter()
       encoder.pipe(copyIn)
       copyIn.on('finish', () => {
         const sql = 'SELECT col1::text FROM plug'

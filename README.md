@@ -2,15 +2,15 @@
 
 [![Build Status](https://travis-ci.org/jeromew/node-pg-copy-streams-binary.svg)](https://travis-ci.org/jeromew/node-pg-copy-streams-binary)
 
-Streams for parsing and deparsing the PostgreSQL COPY binary format.
+This module contains helper streams for decoding and encoding the PostgreSQL COPY binary format.
 Ingest streaming data into PostgresSQL or Export data from PostgreSQL and transform it into a stream, using the COPY BINARY format.
 
 ## what are you talking about ?
 
-Well first you have to know that PostgreSQL has not-so-well-known mechanism that helps when importing into PostgreSQL from a source (_copy-in_)
+Well first you have to know that PostgreSQL has a not-so-well-known mechanism that helps when importing into PostgreSQL from a source (_copy-in_)
 or exporting to a sink from PostgreSQL (_copy-out_)
 
-You should first go and get familiar with the [pg-copy-streams](https://github.com/brianc/node-pg-copy-streams) module that does
+Before using this module, you should make sure to get familiar with the [pg-copy-streams](https://github.com/brianc/node-pg-copy-streams) module that does
 the heavy lifting of handling the COPY part of the protocol flow.
 
 ## what does this module do ?
@@ -21,9 +21,17 @@ The text and csv formats are interesting but they have some limitations due to t
 
 The PostgreSQL documentation states : Many programs produce strange and occasionally perverse CSV files, so the file format is more a convention than a standard. Thus you might encounter some files that cannot be imported using this mechanism, and COPY might produce files that other programs cannot process.
 
-Do you want to go there ? If you take the blue pill, then this module might be for you.
+Do you want to go there ? If you choose to go down the BINARY road, this module can help.
 
-It can be used to parse and deparse the PostgreSQL binary streams that are made available by the `pg-copy-streams` module.
+It can be used to decode and encode the PostgreSQL binary streams that are made available by the `pg-copy-streams` module.
+
+There are currently 5 helper Stream provided :
+
+- rowReader
+- fieldReader
+- rawReader
+- rowWriter
+- transform
 
 The main API is called `transform` an tries to hide many of those details. It can be used to easily do non trivial things like :
 
@@ -31,7 +39,69 @@ The main API is called `transform` an tries to hide many of those details. It ca
 - expanding on the number of rows
 - forking rows into several databases at the same time, with the same of different structures
 
-## Example
+## rowReader
+
+A rowReader is a Transform stream that takes a copyOut stream as input and outputs a sequence of rows.
+The fields in each row are decoded according to the `options.mapping` definition.
+
+### options.mapping
+
+default: false
+This option can be used to describe the rows that are beeing exported from PostgreSQL. Each and every field MUST be described.
+For each index in the array, you MUST put an object `{ key: name, type: type }` where name will be the name given to the field at the corresponding index in the export. Note that it does not need to be equal to the database field name. The COPY protocol does not include the field names.
+The type MUST correspond to the type of the column in the database. It must be a type that is implemented in the library.
+
+the Parser will push rows with the corresponding keys.
+
+When `mapping` is not given, the Parser will push rows as arrays of Buffers.
+
+## fieldReader
+
+A fieldReader is a Transform stream that takes a copyOut stream as input and outputs a sequence of fields.
+The fields are decoded according to the `options.mapping` definition
+
+Note that in fieldReader, each field can define a `mode = sync / async` attribute. When `mode = async`, the field output will be a Readable Stream.
+This can help in scenarios when you do not want to gather a big field in memory but you will need to make sure that you read the field stream because if you do not read it, backpressure will kick in and you will not receive more fields.
+
+### options.mapping
+
+default: false
+This option can be used to describe the rows that are beeing exported from PostgreSQL. Each and every field MUST be described.
+For each index in the array, you MUST put an object `{ key: name, type: type, mode: mode }` where name will be the name given to the field at the corresponding index in the export. Note that it does not need to be equal to the database field name. The COPY protocol does not include the field names.
+The type MUST correspond to the type of the column in the database. It must be a type that is implemented in the library.
+The mode can be 'sync' or 'async'. Default is 'sync'
+
+the Parser will push fields with the corresponding keys.
+
+When `mapping` is not given, the Parser will push fields as arrays of Buffers.
+
+## rawReader
+
+A rawReader is a Transform stream that takes a copyOut stream as input and outputs raw field bytes.
+
+## rowWriter
+
+the deparser is usually used without arguments. It is a Transform Stream (always in object mode) that receives a stream of arrays, and outputs their PostgreSQL binary representation.
+
+Each array is a sequence of { type:.. , value: ..} pairs, where `type` is a PostgreSQL type (cf section supported types) and `value` is the value that need to be deparsed.
+
+Currently, make sure sure value is not the javascript `undefined` because this case is not handled in the deparser. The value can be `null` but don't forget that the target table field should be nullable or the database will complain.
+
+Usually, you would want to use a through2 stream to prepare the arrays, and pipe this into the deparser.
+
+### options.COPY_sendHeader
+
+default: true
+This option can be used to not send the header that PostgreSQL expects at the beginning of a COPY session.
+You could use this if you want to pipe this stream to an already opened COPY session.
+
+### options.COPY_sendTrailer
+
+default: true
+This option can be used to not send the header that PostgreSQL expects at the end of COPY session.
+You could use this if you want to unpipe this stream pipe another one that will send more data and maybe finish the COPY session.
+
+## Example of `transform`
 
 This library is mostly interesting for ETL operations (Extract, Transformation, Load). When you just need Extract+Load, `pg-copy-streams` does the job and you don't need this library.
 
@@ -192,41 +262,6 @@ The Writable Stream will emit a `close` event, following the node.js documentati
 
 Not all Streams emit a `close` event but this one does because it is necessary to wait for the end of all the underlying COPY FROM STDIN BINARY commands on the targets. `close` is emitted when all the underlying COPY commands have emitted their respective `finish` event.
 
-## API for deparser
-
-the deparser is usually used without arguments. It is a Transform Stream (always in object mode) that receives a stream of arrays, and outputs their PostgreSQL binary representation.
-
-Each array is a sequence of { type:.. , value: ..} pairs, where `type` is a PostgreSQL type (cf section supported types) and `value` is the value that need to be deparsed.
-
-Currently, make sure sure value is not the javascript `undefined` because this case is not handled in the deparser. The value can be `null` but don't forget that the target table field should be nullable or the database will complain.
-
-Usually, you would want to use a through2 stream to prepare the arrays, and pipe this into the deparser.
-
-### options.COPY_sendHeader
-
-default: true
-This option can be used to not send the header that PostgreSQL expects at the beginning of a COPY session.
-You could use this if you want to pipe this stream to an already opened COPY session.
-
-### options.COPY_sendTrailer
-
-default: true
-This option can be used to not send the header that PostgreSQL expects at the end of COPY session.
-You could use this if you want to unpipe this stream pipe another one that will send more data and maybe finish the COPY session.
-
-## API for Parser
-
-### options.mapping
-
-default: false
-This option can be used to describe the rows that are beeing exported from PostgreSQL. Each and every field MUST be described.
-For each index in the array, you MUST put an object `{ key: name, type: type }` where name will be the name given to the field at the corresponding index in the export. Note that it does not need to be equal to the database field name. The COPY protocol does not include the field names.
-The type MUST correspond to the type of the column in the database. It must be a type that is implemented in the library.
-
-the Parser will push rows with the corresponding keys.
-
-When `mapping` is not given, the Parser will push rows as arrays of Buffers.
-
 ## Currently supported types
 
 For all supported types, their corresponding array version is also supported.
@@ -237,6 +272,7 @@ For all supported types, their corresponding array version is also supported.
 - float4, float8
 - text
 - json
+- jsonb
 - timestamptz
 
 Note that when types are mentioned in the `mapping` option, it should be stricly equal to one of theses types. pgadmin might sometimes mention aliases (like integer instead of int4) and you should not use these aliases.
@@ -244,6 +280,19 @@ Note that when types are mentioned in the `mapping` option, it should be stricly
 The types for array (one or more dimentions) corresponds to the type prefixed with an underscore. So an array of int4, int4[], needs to be referenced as \_int4 without any mention of the dimensions. This is because the dimension information is embedded in the binary format.
 
 ## changelog
+
+### version 2.0.0 - not yet published
+
+This is a breaking version because it was decided to rename some exported variables.
+
+- Rename exported objects for improved lisibility
+  pg_types parse => decode
+  pg_types deparse => encode
+  parser => rowReader
+  deparser => rowWriter
+- Implement fieldReader with async support
+- Implement rawReader
+- Add jsonb type support
 
 ### version 1.2.1 - published 2020-05-29
 

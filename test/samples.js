@@ -30,6 +30,12 @@ module.exports = [
   { t: 'text', v: 'utf8 éà', r: new BP().word32be(9).put(Buffer.from('utf8 éà', 'utf-8')).buffer() },
   { t: 'json', v: null, r: new BP().word32be(-1).buffer() },
   { t: 'json', v: { a: true, b: [1, 7] }, r: new BP().word32be(20).string('{"a":true,"b":[1,7]}', 'utf-8').buffer() },
+  { t: 'jsonb', v: null, r: new BP().word32be(-1).buffer() },
+  {
+    t: 'jsonb',
+    v: { a: true, b: [1, 7] },
+    r: new BP().word32be(21).string('\u0001{"a":true,"b":[1,7]}', 'utf-8').buffer(),
+  },
   // online float4+float8 hex converter, http://gregstoll.dyndns.org/~gregstoll/floattohex/
   { t: 'float4', v: null, r: new BP().word32be(-1).buffer() },
   {
@@ -193,6 +199,23 @@ module.exports = [
       .string('{"a":1}', 'utf-8')
       .word32be(7)
       .string('{"c":3}', 'utf-8')
+      .buffer(),
+  },
+  { t: '_jsonb', v: null, r: new BP().word32be(-1).buffer() },
+  {
+    t: '_jsonb',
+    v: [{ a: 1 }, { c: 3 }],
+    r: new BP()
+      .word32be(44)
+      .word32be(1)
+      .word32be(0)
+      .word32be(types['jsonb'].oid)
+      .word32be(2)
+      .word32be(1)
+      .word32be(8)
+      .string('\u0001{"a":1}', 'utf-8')
+      .word32be(8)
+      .string('\u0001{"c":3}', 'utf-8')
       .buffer(),
   },
   { t: '_float4', v: null, r: new BP().word32be(-1).buffer() },
