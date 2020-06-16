@@ -55,7 +55,7 @@ describe('integration test - fieldReader', () => {
       through2.obj(
         function (obj, _, cb) {
           let expected = samples[mapping[obj._fieldIndex].type][idx]
-          let result = obj[mapping[obj._fieldIndex].key]
+          let result = obj.value
           if (expected !== null && result !== null) {
             switch (mapping[obj._fieldIndex].type) {
               case 'bytea':
@@ -109,7 +109,7 @@ describe('integration test - fieldReader', () => {
     const copyOutStream = client.query(copyTo(sql))
     const assertResult = (arr) => {
       client.end()
-      assert.deepEqual(arr[0].c1, Buffer.alloc(Math.pow(2, power), '-').toString())
+      assert.deepEqual(arr[0].value, Buffer.alloc(Math.pow(2, power), '-').toString())
       done()
     }
     const p = fieldReader({ mapping: [{ key: 'c1', type: 'text' }] })
@@ -150,9 +150,9 @@ describe('integration test - fieldReader', () => {
       .pipe(p)
       .pipe(
         through2.obj(function (obj, _, cb) {
-          obj.c1 && obj.c1.pipe(concat(assertStreamResult(Buffer.from([0, 0, 0, 42]))))
-          obj.c2 && assert.equal(obj.c2, 101)
-          obj.c3 && obj.c3.pipe(concat(assertStreamResult(Buffer.alloc(Math.pow(2, power), '-'))))
+          obj.name === 'c1' && obj.value.pipe(concat(assertStreamResult(Buffer.from([0, 0, 0, 42]))))
+          obj.name === 'c2' && assert.equal(obj.value, 101)
+          obj.name === 'c3' && obj.value.pipe(concat(assertStreamResult(Buffer.alloc(Math.pow(2, power), '-'))))
           cb()
         })
       )
