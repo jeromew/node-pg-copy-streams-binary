@@ -55,13 +55,22 @@ the Parser will push rows with the corresponding keys.
 
 When `mapping` is not given, the Parser will push rows as arrays of Buffers.
 
+Check test directory for examples.
+
 ## fieldReader
 
-A fieldReader is a Transform stream that takes a copyOut stream as input and outputs a sequence of fields.
-The fields are decoded according to the `options.mapping` definition
+A fieldReader is a Transform stream that takes a copyOut stream as input and outputs an objectMode stream that is a sequence of fields.
+The fields are decoded according to the `options.mapping` definition and each field has the following keys :
+- _fieldIndex: zero-based index of the field within a row
+- _fieldCount: total number of fields within a row
+- _fieldLength: byte-length of the field in binary representation (for bytea = number of bytes)
+- name: name of the field, equal to the key of the field in the mapping definition
+- value: value of the field. When mode is 'sync', this is the decoded value. When mode is 'async', this is a stream of  _fieldLength bytes
 
 Note that in fieldReader, each field can define a `mode = sync / async` attribute. When `mode = async`, the field output will be a Readable Stream.
 This can help in scenarios when you do not want to gather a big field in memory but you will need to make sure that you read the field stream because if you do not read it, backpressure will kick in and you will not receive more fields.
+
+Check test directory for examples.
 
 ### options.mapping
 
@@ -75,9 +84,12 @@ the Parser will push fields with the corresponding keys.
 
 When `mapping` is not given, the Parser will push fields as arrays of Buffers.
 
+
 ## rawReader
 
 A rawReader is a Transform stream that takes a copyOut stream as input and outputs raw field bytes.
+
+Check test directory for examples.
 
 ## rowWriter
 
@@ -88,6 +100,8 @@ Each array is a sequence of { type:.. , value: ..} pairs, where `type` is a Post
 Currently, make sure sure value is not the javascript `undefined` because this case is not handled in the deparser. The value can be `null` but don't forget that the target table field should be nullable or the database will complain.
 
 Usually, you would want to use a through2 stream to prepare the arrays, and pipe this into the deparser.
+
+Check test directory for examples.
 
 ### options.COPY_sendHeader
 
@@ -318,7 +332,7 @@ Use it at your own risks !
 
 - [COPY documentation, including binary format](https://www.postgresql.org/docs/current/static/sql-copy.html)
 - [send/recv implementations for types in PostgreSQL](https://github.com/postgres/postgres/tree/master/src/backend/utils/adt)
-- [default type OIDs in PostgreSQL catalog](https://github.com/postgres/postgres/blob/master/src/include/catalog/pg_type.h)
+- [default type OIDs in PostgreSQL catalog](https://github.com/postgres/postgres/blob/master/src/include/catalog/pg_type.dat)
 
 ## Acknowledgments
 
