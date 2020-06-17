@@ -13,3 +13,11 @@ minor: test
 	git push origin master --tags
 	npm publish
 
+major: test
+	npm version minor -m "Bump version"
+	git push origin master --tags
+	npm publish
+
+
+
+
