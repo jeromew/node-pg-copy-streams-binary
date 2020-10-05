@@ -295,6 +295,10 @@ The types for array (one or more dimentions) corresponds to the type prefixed wi
 
 ## changelog
 
+### version 2.0.1 - published 2020-10-05
+
+ - Upgrade bl@4.0.3
+
 ### version 2.0.0 - published 2020-06-17
 
 This is a breaking version because it was decided to rename some exported variables.
