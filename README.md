@@ -296,9 +296,13 @@ The types for array (one or more dimentions) corresponds to the type prefixed wi
 
 ## changelog
 
+### version 2.1.1 - published 2021-08-25
+
+- Add varchar type support
+
 ### version 2.0.1 - published 2020-10-05
 
- - Upgrade bl@4.0.3
+- Upgrade bl@4.0.3
 
 ### version 2.0.0 - published 2020-06-17
 
