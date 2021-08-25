@@ -285,6 +285,7 @@ For all supported types, their corresponding array version is also supported.
 - int2, int4
 - float4, float8
 - text
+- varchar
 - json
 - jsonb
 - timestamptz

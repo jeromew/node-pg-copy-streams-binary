@@ -28,6 +28,9 @@ module.exports = [
   { t: 'text', v: null, r: new BP().word32be(-1).buffer() },
   { t: 'text', v: 'hello', r: new BP().word32be(5).put(Buffer.from('hello')).buffer() },
   { t: 'text', v: 'utf8 éà', r: new BP().word32be(9).put(Buffer.from('utf8 éà', 'utf-8')).buffer() },
+  { t: 'varchar', v: null, r: new BP().word32be(-1).buffer() },
+  { t: 'varchar', v: 'hello', r: new BP().word32be(5).put(Buffer.from('hello')).buffer() },
+  { t: 'varchar', v: 'utf8 éà', r: new BP().word32be(9).put(Buffer.from('utf8 éà', 'utf-8')).buffer() },
   { t: 'json', v: null, r: new BP().word32be(-1).buffer() },
   { t: 'json', v: { a: true, b: [1, 7] }, r: new BP().word32be(20).string('{"a":true,"b":[1,7]}', 'utf-8').buffer() },
   { t: 'jsonb', v: null, r: new BP().word32be(-1).buffer() },
@@ -174,6 +177,25 @@ module.exports = [
       .word32be(1)
       .word32be(0)
       .word32be(types['text'].oid)
+      .word32be(2)
+      .word32be(1)
+      .word32be(2)
+      .word8(97)
+      .word8(98)
+      .word32be(2)
+      .word8(99)
+      .word8(100)
+      .buffer(),
+  },
+  { t: '_varchar', v: null, r: new BP().word32be(-1).buffer() },
+  {
+    t: '_varchar',
+    v: ['ab', 'cd'],
+    r: new BP()
+      .word32be(32)
+      .word32be(1)
+      .word32be(0)
+      .word32be(types['varchar'].oid)
       .word32be(2)
       .word32be(1)
       .word32be(2)
