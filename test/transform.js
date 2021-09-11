@@ -1,17 +1,11 @@
 const assert = require('assert')
 const async = require('async')
 
-const pg = require('pg')
 const { to: pgCopyTo, from: pgCopyFrom } = require('pg-copy-streams')
 const through2 = require('through2')
 
+const { getClient } = require('./utils')
 const { transform } = require('../')
-
-const getClient = function (dsn) {
-  const client = new pg.Client(dsn)
-  client.connect()
-  return client
-}
 
 describe('integration test - transform', () => {
   it('should correclty extract, transform and load data', (done) => {

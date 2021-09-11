@@ -1,20 +1,15 @@
 const assert = require('assert')
-const pg = require('pg')
 const { fieldReader } = require('../')
 const { to: copyTo } = require('pg-copy-streams')
 const through2 = require('through2')
 const concat = require('concat-stream')
-
-const getClient = function () {
-  const client = new pg.Client()
-  client.connect()
-  return client
-}
+const { getClient } = require('./utils')
 
 const samples = {
   bool: [null, true, false],
   int2: [23, -59, null],
   int4: [2938, null, -99283],
+  int8: [BigInt(2938), null, BigInt(-99283)],
   text: ['aaa', 'ééé', null],
   json: [JSON.stringify({}), JSON.stringify([1, 2]), null],
   jsonb: [JSON.stringify({}), JSON.stringify([1, 2]), null],
