@@ -282,7 +282,7 @@ For all supported types, their corresponding array version is also supported.
 
 - bool
 - bytea
-- int2, int4
+- int2, int4, int8
 - float4, float8
 - text
 - varchar
@@ -295,6 +295,10 @@ Note that when types are mentioned in the `mapping` option, it should be stricly
 The types for array (one or more dimentions) corresponds to the type prefixed with an underscore. So an array of int4, int4[], needs to be referenced as \_int4 without any mention of the dimensions. This is because the dimension information is embedded in the binary format.
 
 ## changelog
+
+### version 2.2.0 - published 2021-09-13
+
+- Add int8 type support (usage requires node version 10.20+)
 
 ### version 2.1.0 - published 2021-08-25
 
