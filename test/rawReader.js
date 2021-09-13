@@ -1,14 +1,8 @@
 const assert = require('assert')
-const pg = require('pg')
 const { rawReader } = require('../')
 const { to: copyTo } = require('pg-copy-streams')
 const concat = require('concat-stream')
-
-const getClient = function () {
-  const client = new pg.Client()
-  client.connect()
-  return client
-}
+const { getClient } = require('./utils')
 
 describe('integration test - rawReader', () => {
   it('stream all raw bytes / small fields including empty and null', (done) => {

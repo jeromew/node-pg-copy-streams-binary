@@ -1,14 +1,8 @@
 const assert = require('assert')
 const util = require('util')
-const pg = require('pg')
 const { rowWriter } = require('../')
 const { from: copyFrom } = require('pg-copy-streams')
-
-const getClient = function () {
-  const client = new pg.Client()
-  client.connect()
-  return client
-}
+const { getClient } = require('./utils')
 
 describe('integration test - copyIn', () => {
   it('ingesting an empty flow should not trigger an error', (done) => {
@@ -56,6 +50,23 @@ describe('integration test - copyIn', () => {
         [3, 4],
       ],
       '{{1,2},{3,4}}',
+    ],
+    ['int8', 0, null, null],
+    ['int8', 0, BigInt('501007199254740991'), '501007199254740991'],
+    [
+      'int8',
+      1,
+      [BigInt('501007199254740991'), BigInt('501007199254740999')],
+      '{501007199254740991,501007199254740999}',
+    ],
+    [
+      'int8',
+      2,
+      [
+        [BigInt('501007199254740991'), BigInt('501007199254740999')],
+        [BigInt('501007199254740993'), BigInt('501007199254740994')],
+      ],
+      '{{501007199254740991,501007199254740999},{501007199254740993,501007199254740994}}',
     ],
     ['float4', 0, 0.2736, '0.2736'],
     ['float4', 0, 2.928e27, '2.928e+27'],

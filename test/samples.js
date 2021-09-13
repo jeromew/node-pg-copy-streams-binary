@@ -7,6 +7,12 @@ BP.prototype.string = function (s, enc) {
   return this.put(buf)
 }
 
+function makeBigIntBuffer(value) {
+  const buf = Buffer.alloc(8)
+  buf.writeBigInt64BE(BigInt(value))
+  return buf
+}
+
 module.exports = [
   // simple types
   { t: 'bool', v: null, r: new BP().word32be(-1).buffer() },
@@ -25,6 +31,12 @@ module.exports = [
   { t: 'int2', v: 128, r: new BP().word32be(2).word16be(128).buffer() },
   { t: 'int4', v: null, r: new BP().word32be(-1).buffer() },
   { t: 'int4', v: 128, r: new BP().word32be(4).word32be(128).buffer() },
+  { t: 'int8', v: null, r: new BP().word32be(-1).buffer() },
+  {
+    t: 'int8',
+    v: BigInt('128'),
+    r: new BP().word32be(8).put(makeBigIntBuffer('128')).buffer(),
+  },
   { t: 'text', v: null, r: new BP().word32be(-1).buffer() },
   { t: 'text', v: 'hello', r: new BP().word32be(5).put(Buffer.from('hello')).buffer() },
   { t: 'text', v: 'utf8 éà', r: new BP().word32be(9).put(Buffer.from('utf8 éà', 'utf-8')).buffer() },
@@ -147,6 +159,32 @@ module.exports = [
       .word32be(5)
       .word32be(4)
       .word32be(6)
+      .buffer(),
+  },
+  { t: '_int8', v: null, r: new BP().word32be(-1).buffer() },
+  {
+    t: '_int8',
+    v: [
+      [BigInt('1'), BigInt('2')],
+      [BigInt('3'), BigInt('4')],
+    ],
+    r: new BP()
+      .word32be(76)
+      .word32be(2)
+      .word32be(0)
+      .word32be(types['int8'].oid)
+      .word32be(2)
+      .word32be(1)
+      .word32be(2)
+      .word32be(1)
+      .word32be(8)
+      .put(makeBigIntBuffer('1'))
+      .word32be(8)
+      .put(makeBigIntBuffer('2'))
+      .word32be(8)
+      .put(makeBigIntBuffer('3'))
+      .word32be(8)
+      .put(makeBigIntBuffer('4'))
       .buffer(),
   },
   { t: '_bytea', v: null, r: new BP().word32be(-1).buffer() },
