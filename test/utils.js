@@ -2,7 +2,7 @@ const pg = require('pg')
 
 module.exports = {
   getClient: () => {
-    const client = new pg.Client(process.env.PG_URL)
+    const client = new pg.Client()
     client.connect()
     return client
   },
