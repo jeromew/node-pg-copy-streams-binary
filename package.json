@@ -28,7 +28,6 @@
     "async": "^3.2.1",
     "concat-stream": "^2.0.0",
     "deeper": "^2.1.0",
-    "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^3.4.1",
     "gonna": "0.0.0",

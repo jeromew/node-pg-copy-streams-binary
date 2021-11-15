@@ -13,6 +13,19 @@ function makeBigIntBuffer(value) {
   return buf
 }
 
+function makeUuidBuffer(value) {
+  //const buf = Buffer.alloc(16)
+  const hexStr = value.replace(/-/g, '')
+  return Buffer.from(hexStr, 'hex')
+}
+
+// function uuidBuftoString(buffer) {
+//   if (buffer.length != 16) throw new Error(`Invalid buffer length for uuid: ${buffer.length}`)
+//   if (buffer.equals(Buffer.alloc(16))) return null // If buffer is all zeros, return null
+//   const str = buffer.toString('hex')
+//   return `${str.slice(0, 8)}-${str.slice(8, 12)}-${str.slice(12, 16)}-${str.slice(16, 20)}-${str.slice(20)}`
+// }
+
 module.exports = [
   // simple types
   { t: 'bool', v: null, r: new BP().word32be(-1).buffer() },
@@ -37,6 +50,13 @@ module.exports = [
     v: BigInt('128'),
     r: new BP().word32be(8).put(makeBigIntBuffer('128')).buffer(),
   },
+  { t: 'int8', v: null, r: new BP().word32be(-1).buffer() },
+  {
+    t: 'uuid',
+    v: 'c4128131-d11f-470c-8fb8-a8e08a086882',
+    r: new BP().word32be(16).put(makeUuidBuffer('c4128131-d11f-470c-8fb8-a8e08a086882')).buffer(),
+  },
+  { t: 'uuid', v: null, r: new BP().word32be(-1).buffer() },
   { t: 'text', v: null, r: new BP().word32be(-1).buffer() },
   { t: 'text', v: 'hello', r: new BP().word32be(5).put(Buffer.from('hello')).buffer() },
   { t: 'text', v: 'utf8 éà', r: new BP().word32be(9).put(Buffer.from('utf8 éà', 'utf-8')).buffer() },
@@ -159,6 +179,32 @@ module.exports = [
       .word32be(5)
       .word32be(4)
       .word32be(6)
+      .buffer(),
+  },
+  { t: '_uuid', v: null, r: new BP().word32be(-1).buffer() },
+  {
+    t: '_uuid',
+    v: [
+      'c4128131-d11f-470c-8fb8-a8e08a086882',
+      'c4128131-d11f-470c-8fb8-a8e08a086883',
+      'c4128131-d11f-470c-8fb8-a8e08a086884',
+      'c4128131-d11f-470c-8fb8-a8e08a086885',
+    ],
+    r: new BP()
+      .word32be(100)
+      .word32be(1)
+      .word32be(0)
+      .word32be(types['uuid'].oid)
+      .word32be(4)
+      .word32be(1)
+      .word32be(16)
+      .put(makeUuidBuffer('c4128131-d11f-470c-8fb8-a8e08a086882'))
+      .word32be(16)
+      .put(makeUuidBuffer('c4128131-d11f-470c-8fb8-a8e08a086883'))
+      .word32be(16)
+      .put(makeUuidBuffer('c4128131-d11f-470c-8fb8-a8e08a086884'))
+      .word32be(16)
+      .put(makeUuidBuffer('c4128131-d11f-470c-8fb8-a8e08a086885'))
       .buffer(),
   },
   { t: '_int8', v: null, r: new BP().word32be(-1).buffer() },
